@@ -16,7 +16,9 @@ BIN_DIR = bin
 TARGET  = $(BIN_DIR)/embedded-keyword-spotter
 
 # Source files (add new .c or .cpp files here as you create them)
-SRCS    = $(SRC_DIR)/audioCapture.cpp
+SRCS    = $(SRC_DIR)/audioCapture.cpp \
+		  $(SRC_DIR)/ringbuffer.cpp \
+		  $(SRC_DIR)/main.cpp \
 
 # Object files (auto generated from SRCS)
 OBJS    = $(SRCS:.cpp=.o)

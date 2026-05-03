@@ -1,21 +1,50 @@
-//To capture audio form the microphone and store in a ring buffer using callback 
-
 #include <iostream>
-#include <thread>
-#include<portaudio.h>
+#include <portaudio.h>
 #include <iomanip>
+#include "config.h"
+#include "ringbuffer.h"
 using namespace std;
 
 
-bool isdisplayactive = true;
-static void checkError(PaError err)
+
+
+int audioCallback(const void *inputBuffer,
+                         void *outputBuffer,
+                         unsigned long framesPerBuffer,
+                         const PaStreamCallbackTimeInfo *timeInfo,
+                         PaStreamCallbackFlags statusFlags,
+                         void *audioBuffer)
+{
+    (void)timeInfo;
+    (void)statusFlags;
+    ringBuffer* rb =(ringBuffer*)audioBuffer;
+
+    int16_t *in  = (int16_t *)inputBuffer;
+    int16_t *out = (int16_t *)outputBuffer;
+
+    if (in == NULL || out == NULL)
+        return paContinue;
+
+    for (unsigned long i = 0; i < framesPerBuffer; i++){
+        write_rb(rb,in[i]);
+        out[i] = read_rb(rb);
+    }
+        
+
+    return paContinue;
+}
+
+void checkError(PaError err)
 {
     if (err != paNoError)
     {
-        cout << "Error:- " << Pa_GetErrorText(err) << endl;
+        cout << "PortAudio Error: " << Pa_GetErrorText(err) << endl;
         exit(EXIT_FAILURE);
     }
 }
+
+
+
 
 void printAvailableDevices()
 {
@@ -25,8 +54,6 @@ void printAvailableDevices()
         cout << "ERROR: Pa_GetDeviceCount returned " << numDevices << endl;
         return;
     }
-
-    cout << "\n================ Available Audio Devices ================\n";
 
     cout << left
          << setw(4)  << "Idx"
@@ -41,9 +68,8 @@ void printAvailableDevices()
 
     for (int i = 0; i < numDevices; i++)
     {
-        const PaDeviceInfo* deviceInfo = Pa_GetDeviceInfo(i);
-        const PaHostApiInfo* apiInfo =
-            Pa_GetHostApiInfo(deviceInfo->hostApi);
+        const PaDeviceInfo  *deviceInfo = Pa_GetDeviceInfo(i);
+        const PaHostApiInfo *apiInfo    = Pa_GetHostApiInfo(deviceInfo->hostApi);
 
         cout << left
              << setw(4)  << i
@@ -55,40 +81,6 @@ void printAvailableDevices()
              << endl;
     }
 
-    cout << "=========================================================\n";
+    cout << string(84, '-') << endl;
 }
 
-int main(){
-    
-    cout << "=== PortAudio Test ===" << endl;
-
-    PaError err = Pa_Initialize();
-    checkError(err);
-
-    if(isdisplayactive){
-        printAvailableDevices();
-        return 0;
-    }  
-
-    int inputMic = 0;
-    int outputSpeaker = 0;
-
-    PaStreamParameters inputParameter;
-    PaStreamParameters outputParameter;
-
-    inputParameter.device = inputMic;
-    inputParameter.channelCount = 1;
-    inputParameter.sampleFormat = paInt16;
-    inputParameter.hostApiSpecificStreamInfo = NULL;
-    inputParameter.suggestedLatency = Pa_GetDeviceInfo(inputMic)->defaultLowInputLatency;
-
-
-    outputParameter.device = outputSpeaker;
-    outputParameter.channelCount = 1;
-    outputParameter.sampleFormat = paInt16;
-    outputParameter.hostApiSpecificStreamInfo = NULL;
-    outputParameter.suggestedLatency = Pa_GetDeviceInfo(outputSpeaker)->defaultLowOutputLatency;
-
-    
-
-}
