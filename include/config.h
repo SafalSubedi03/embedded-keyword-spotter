@@ -7,4 +7,4 @@
 
 #define processLatency  44100 //The number of samples after which read operation is possible 
 
-#define isDisplayActive   0  
+#define isDisplayActive   0

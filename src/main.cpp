@@ -21,21 +21,24 @@ int main()
 
     
 
-    if (isDisplayActive)
+    if (isDisplayActive){
         printAvailableDevices();
+        return 0;
+    }
+        
 
     PaStreamParameters inputParams;
-    inputParams.device                    = Pa_GetDefaultInputDevice();
+    inputParams.device                    = 16;
     inputParams.channelCount              = CHANNELS;
     inputParams.sampleFormat              = paInt16;
-    inputParams.suggestedLatency          = Pa_GetDeviceInfo(Pa_GetDefaultInputDevice())->defaultLowInputLatency;
+    inputParams.suggestedLatency          = Pa_GetDeviceInfo(16)->defaultLowInputLatency;
     inputParams.hostApiSpecificStreamInfo = NULL;
 
     PaStreamParameters outputParams;
-    outputParams.device                    = Pa_GetDefaultOutputDevice();
+    outputParams.device                    = 16;
     outputParams.channelCount              = CHANNELS;
     outputParams.sampleFormat              = paInt16;
-    outputParams.suggestedLatency          = Pa_GetDeviceInfo(Pa_GetDefaultOutputDevice())->defaultLowOutputLatency;
+    outputParams.suggestedLatency          = Pa_GetDeviceInfo(16)->defaultLowOutputLatency;
     outputParams.hostApiSpecificStreamInfo = NULL;
 
     cout << "Input:  [" << inputParams.device << "] " 
