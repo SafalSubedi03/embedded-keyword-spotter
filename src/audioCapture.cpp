@@ -8,31 +8,24 @@ using namespace std;
 
 
 
-int audioCallback(const void *inputBuffer,
-                         void *outputBuffer,
-                         unsigned long framesPerBuffer,
-                         const PaStreamCallbackTimeInfo *timeInfo,
-                         PaStreamCallbackFlags statusFlags,
-                         void *audioBuffer)
+int audioCallback(const void *inputBuffer, void *outputBuffer,
+                  unsigned long framesPerBuffer,
+                  const PaStreamCallbackTimeInfo *,
+                  PaStreamCallbackFlags,
+                  void *userData)
 {
-    (void)timeInfo;
-    (void)statusFlags;
-    ringBuffer* rb =(ringBuffer*)audioBuffer;
+    const int16_t *in = (const int16_t *)inputBuffer;
+    ringBuffer    *rb = (ringBuffer *)userData;
 
-    int16_t *in  = (int16_t *)inputBuffer;
-    int16_t *out = (int16_t *)outputBuffer;
+    // outputBuffer is NULL on input-only streams — never touch it
+    (void)outputBuffer;
 
-    if (in == NULL || out == NULL)
-        return paContinue;
-
-    for (unsigned long i = 0; i < framesPerBuffer; i++){
-        write_rb(rb,in[i]);
-        out[i] = read_rb(rb);
-    }
-        
+    // write samples to ring buffer — this is all we need
+    write_rb(rb, in, (int)framesPerBuffer);
 
     return paContinue;
 }
+
 
 void checkError(PaError err)
 {

@@ -1,48 +1,46 @@
-#include<stdint.h>
-#include "config.h"
+#include "ringbuffer.h"
 
+void initilize_rb(ringBuffer *rb)
+{
+    rb->writeIndex.store(0);
+    rb->readIndex.store(0);
 
-
-struct ringBuffer{
-    int writeIndex;
-    int readIndex;
-    bool isAvailable;
-    int16_t buffer[BufferSize];
-    
-};
-
-void initilize_rb(ringBuffer* rb){
-    
-    rb->writeIndex = 0;
-    rb->readIndex = 0;
-    rb->isAvailable = false;
-
-    for(int i = 0;i<BufferSize;i++){
-        rb->buffer[i] = (int16_t)0;
-    }
+    for (int i = 0; i < BufferSize; i++)
+        rb->buffer[i] = 0;
 }
 
-void write_rb(ringBuffer* rb,int16_t data,int datalen = 1){
-    for(int i = 0;i < datalen;i++)
-    {
-        rb->buffer[rb->writeIndex] = data;        
-        rb->writeIndex = (rb->writeIndex + 1) % BufferSize;
-        
-    }  
-    if(rb->writeIndex > processLatency)
-        rb->isAvailable = true;
-    
+void write_rb(ringBuffer *rb, const int16_t *data, int count)
+{
+    int w = rb->writeIndex.load(std::memory_order_relaxed);
+
+    for (int i = 0; i < count; i++) {
+        rb->buffer[w] = data[i];
+        w = (w + 1) % BufferSize;
+    }
+
+    rb->writeIndex.store(w, std::memory_order_release);
 }
 
-int16_t read_rb(ringBuffer* rb){
-    int16_t data = 0;
-    if(rb->isAvailable){
-        data = rb->buffer[rb->readIndex];
-        rb->readIndex = (rb->readIndex + 1) %BufferSize;       
-    }
-    else 
-        return 0;
-    return data;
-    
-} 
+int available_rb(ringBuffer *rb)
+{
+    int w = rb->writeIndex.load(std::memory_order_acquire);
+    int r = rb->readIndex.load(std::memory_order_relaxed);
+    return (w - r + BufferSize) % BufferSize;
+}
 
+int read_rb(ringBuffer *rb, int16_t *out, int count)
+{
+    int avail = available_rb(rb);
+    if (avail < count)
+        count = avail;
+
+    int r = rb->readIndex.load(std::memory_order_relaxed);
+
+    for (int i = 0; i < count; i++) {
+        out[i] = rb->buffer[r];
+        r = (r + 1) % BufferSize;
+    }
+
+    rb->readIndex.store(r, std::memory_order_release);
+    return count;
+}
