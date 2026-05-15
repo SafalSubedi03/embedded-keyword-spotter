@@ -18,7 +18,7 @@ int audioCallback(const void *inputBuffer,
     (void)timeInfo;
     (void)statusFlags;
     (void)audioBuffer;
-    // ringBuffer* rb =(ringBuffer*)audioBuffer;
+    ringBuffer* rb =(ringBuffer*)audioBuffer;
 
     int16_t *in  = (int16_t *)inputBuffer;
     int16_t *out = (int16_t *)outputBuffer;
@@ -27,9 +27,9 @@ int audioCallback(const void *inputBuffer,
         return paContinue;
 
     for (unsigned long i = 0; i < framesPerBuffer; i++){
-        // write_rb(rb,in[i]);
-        // out[i] = read_rb(rb);
-        out[i] = in[i];
+         write_rb(rb,in[i]);
+        out[i] = read_rb(rb);
+        // out[i] = in[i];
     }
         
 
